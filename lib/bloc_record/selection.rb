@@ -37,9 +37,7 @@ module Selection
   end
 
   def method_missing(method, *args, &block)
-    if method == :find_by_name
-      find_by(:name, *args[0])
-    end
+      find_by(method, *args[0])
   end
 
   def find_each(options = {}, &block)
@@ -63,7 +61,7 @@ module Selection
 				ORDER BY id
 				LIMIT #{batch_size} OFFSET #{start};
 			SQL
-			
+
 			rows = connection.execute sql
 			rows = rows_to_array(rows)
 
