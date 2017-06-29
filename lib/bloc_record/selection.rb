@@ -36,9 +36,16 @@ module Selection
     init_object_from_row(row)
   end
 
-  def method_missing(method, *args, &block)
-    if method == :find_by_name
-      find_by(:name, *args[0])
+  def method_missing(method, *args)
+    if method.match(/find_by_/)
+      attribute = method.to_s.split('find_by_')[1]
+      if columns.include?(attribute)
+        find_by(attribute, *args)
+      else
+        puts "#{attribute} does not exist in the database -- please try again."
+      end
+    else
+      super
     end
   end
 
@@ -63,7 +70,7 @@ module Selection
 				ORDER BY id
 				LIMIT #{batch_size} OFFSET #{start};
 			SQL
-			
+
 			rows = connection.execute sql
 			rows = rows_to_array(rows)
 
