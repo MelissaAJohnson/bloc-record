@@ -36,9 +36,18 @@ module Selection
     init_object_from_row(row)
   end
 
-  def method_missing(method, *args, &block)
-      find_by(method, *args[0])
-  end
+  def method_missing(method, *args)
+    if method.match(/find_by_/)
+      attribute = method.to_s.split('find_by_')[1]
+      if columns.include?(attribute)
+        find_by(attribute, *args)
+      else
+        puts "#{attribute} does not exist in the database -- please try again."
+      end
+    else
+      super
+    end
+
 
   def find_each(options = {}, &block)
 		if block_given?
