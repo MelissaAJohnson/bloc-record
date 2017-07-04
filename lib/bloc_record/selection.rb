@@ -36,9 +36,18 @@ module Selection
     init_object_from_row(row)
   end
 
-  def method_missing(method, *args, &block)
-      find_by(method, *args[0])
-  end
+  def method_missing(method, *args)
+    if method.match(/find_by_/)
+      attribute = method.to_s.split('find_by_')[1]
+      if columns.include?(attribute)
+        find_by(attribute, *args)
+      else
+        puts "#{attribute} does not exist in the database -- please try again."
+      end
+    else
+      super
+    end
+
 
   def find_each(options = {}, &block)
 		if block_given?
@@ -134,10 +143,14 @@ module Selection
   end
 
   def order(*args)
-    if args.count > 1
-      order = args.join(",")
-    else
-      order = args.first.to_s
+    case args.first
+    when String
+      if args.count > 1
+        order = args.join(",")
+      end
+    when Hash
+      order_hash = BlocRecord::Utility.convert_keys(args)
+      order = order_hash.map {|key, value| "#{key} #{BlocRecord::Utility.sql_strings(value)}"}.join(",")
     end
 
     rows = connection.execute <<-SQL
@@ -164,6 +177,14 @@ module Selection
         rows = connection.execute <<-SQL
           SELECT * FROM #{table}
           INNER JOIN #{args.first} ON #{args.first}.#{table}_id = #{table}.id
+        SQL
+      when Hash
+        expression_hash = BlocRecord::Utility.convert_keys(args.first)
+        expression = expression_hash.map { |key, value| "#{key} ON #{key}.#{table}_id = #{table}.id
+                   INNER JOIN #{BlocRecord::Utility.sql_strings(value)} ON #{BlocRecord::Utility.sql_strings(value)}.#{key}_id = #{key}.id"}.join(" INNER JOIN ")
+        rows = connection.execute <<-SQL
+          SELECT * FROM #{table}
+          INNER JOIN #{expression}
         SQL
       end
     end
