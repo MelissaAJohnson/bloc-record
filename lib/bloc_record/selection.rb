@@ -129,7 +129,7 @@ module Selection
         expression = args.first
       when Hash
         expression_hash = BlocRecord::Utility.convert_keys(args.first)
-        expression = expression_hash.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}"}.join(" and ")
+        expression = expression_hash.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}"}.join(" AND")
       end
     end
 
@@ -201,6 +201,8 @@ module Selection
   end
 
   def rows_to_array(rows)
-    rows.map { |row| new(Hash[columns.zip(row)]) }
+    collection = BlocRecord::Collection.new
+    rows.each { |row| collection << new(Hash[columns.zip(row)]) }
+    collection
   end
 end
