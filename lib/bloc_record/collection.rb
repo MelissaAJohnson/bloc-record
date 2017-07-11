@@ -63,5 +63,16 @@ module BlocRecord
         super
       end
     end
+    def destroy_all
+      ids = self.map(&:id)
+
+      if ids.empty?
+        puts "Empty"
+      elsif ids.first.is_nil?
+        puts "Records were not found"
+      else
+        self.first.class.destroy(ids)
+      end
+    end
   end
 end
